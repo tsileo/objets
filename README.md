@@ -1,6 +1,6 @@
 # Objets
 
-Objets (`/ɔb.ʒɛ/`, it means objects in French) is an object storage (using a directory as backend) with a AWS S3 compatible API.
+Objets (`/ɔb.ʒɛ/`, objects in French) is an object storage server (using a directory as backend) with a AWS S3 compatible API.
 
 ## Features
 
