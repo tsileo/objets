@@ -16,9 +16,6 @@ import (
 	"github.com/tsileo/s3layer/multipart"
 )
 
-// FIXME(tsileo):
-// - store the acl in a kv file (graceful shutdown)
-
 var (
 	bucketDir = "buckets"
 )
@@ -37,7 +34,7 @@ func New(confPath string) (*Objets, error) {
 	if err != nil {
 		return nil, err
 	}
-	acl, err := newACL(filepath.Join(conf.DataDir, "acl.db"))
+	acl, err := newACL(filepath.Join(conf.DataDir(), "acl.db"))
 	if err != nil {
 		return nil, err
 	}
@@ -80,16 +77,16 @@ func (o *Objets) DeleteObject(bucket, key string) error {
 	if err := o.acl.Remove(bucket, key); err != nil {
 		return err
 	}
-	return os.Remove(filepath.Join(o.conf.DataDir, bucketDir, bucket, key))
+	return os.Remove(filepath.Join(o.conf.DataDir(), bucketDir, bucket, key))
 }
 
 func (o *Objets) DeleteBucket(bucket string) error {
 	// TODO(tsileo): remove all ACLs first
-	return os.RemoveAll(filepath.Join(o.conf.DataDir, bucketDir, bucket))
+	return os.RemoveAll(filepath.Join(o.conf.DataDir(), bucketDir, bucket))
 }
 
 func (o *Objets) PutBucket(bucket string, acl s3layer.CannedACL) error {
-	return os.MkdirAll(filepath.Join(o.conf.DataDir, bucketDir, bucket), os.ModeDir)
+	return os.MkdirAll(filepath.Join(o.conf.DataDir(), bucketDir, bucket), os.ModeDir)
 }
 
 func (o *Objets) PutObjectAcl(bucket, key string, acl s3layer.CannedACL) error {
@@ -105,7 +102,7 @@ func (o *Objets) ListBucket(bucket, prefix string) ([]*s3layer.ListBucketResultC
 	contents := []*s3layer.ListBucketResultContent{}
 	prefixes := []*s3layer.ListBucketResultPrefix{}
 
-	path := filepath.Join(o.conf.DataDir, bucketDir, bucket, prefix)
+	path := filepath.Join(o.conf.DataDir(), bucketDir, bucket, prefix)
 	log.Printf("ListBucket path=%s\n", path)
 	dir, err := os.Open(path)
 	if err != nil {
@@ -138,7 +135,7 @@ func (o *Objets) GetObject(bucket, key string) (io.Reader, s3layer.CannedACL, er
 	if containsDotDot(key) || containsDotDot(bucket) {
 		return nil, s3layer.Empty, fmt.Errorf("invalid key/bucket")
 	}
-	path := filepath.Join(o.conf.DataDir, bucketDir, bucket, key)
+	path := filepath.Join(o.conf.DataDir(), bucketDir, bucket, key)
 	log.Printf("GetObject path=%s\n", path)
 	f, err := os.Open(path)
 	if err != nil {
@@ -156,10 +153,10 @@ func (o *Objets) PutObject(bucket, key string, reader io.Reader, acl s3layer.Can
 	if containsDotDot(key) || containsDotDot(bucket) {
 		return fmt.Errorf("invalid key/bucket")
 	}
-	if err := os.MkdirAll(filepath.Join(o.conf.DataDir, bucketDir, bucket, filepath.Dir(key)), 0644); err != nil {
+	if err := os.MkdirAll(filepath.Join(o.conf.DataDir(), bucketDir, bucket, filepath.Dir(key)), 0644); err != nil {
 		return err
 	}
-	path := filepath.Join(o.conf.DataDir, bucketDir, bucket, key)
+	path := filepath.Join(o.conf.DataDir(), bucketDir, bucket, key)
 	f, err := os.Create(path)
 	if err != nil {
 		return err

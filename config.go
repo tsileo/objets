@@ -12,7 +12,7 @@ var (
 
 type Config struct {
 	// Where objects will be stored
-	DataDir string `yaml:"data_dir"`
+	dataDir string `yaml:"data_dir"`
 
 	// Server listen
 	listen string `yaml:"listen"`
@@ -24,6 +24,13 @@ type Config struct {
 	// Auth
 	AccessKeyID     string `yaml:"access_key_id"`
 	SecretAccessKey string `yaml:"secret_access_key"`
+}
+
+func (c *Config) DataDir() string {
+	if c.dataDir == "" {
+		return DefautRootPath
+	}
+	return c.dataDir
 }
 
 func (c *Config) Listen() string {

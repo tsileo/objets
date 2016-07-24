@@ -48,11 +48,11 @@ func (s *Server) Serve() error {
 				Domains: s.objets.conf.Domains,
 				Address: s.objets.conf.Listen(),
 
-				TLSCertFile: filepath.Join(s.objets.conf.DataDir, "cert.pem"),
-				TLSKeyFile:  filepath.Join(s.objets.conf.DataDir, "key.pem"),
+				TLSCertFile: filepath.Join(s.objets.conf.DataDir(), "cert.pem"),
+				TLSKeyFile:  filepath.Join(s.objets.conf.DataDir(), "key.pem"),
 
-				RegistrationFile: filepath.Join(s.objets.conf.DataDir, "user.reg"),
-				PrivateKeyFile:   filepath.Join(s.objets.conf.DataDir, "user.pem"),
+				RegistrationFile: filepath.Join(s.objets.conf.DataDir(), "user.reg"),
+				PrivateKeyFile:   filepath.Join(s.objets.conf.DataDir(), "user.pem"),
 
 				TOSCallback: acmewrapper.TOSAgree,
 			})
