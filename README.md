@@ -11,6 +11,7 @@ Objets (`/ɔb.ʒɛ/`, objects in French) is an object storage server (using a di
 
 ## Constraints
 
+ - No "one subdomain per bucket"
  - No torrent feature
  - No ACL on bucket
  - Only support `private` and `public-read` ACL for objets
@@ -34,6 +35,26 @@ secret_access_key: 'yoursecretaccesskey' # required
 
 ```sh
 $ objets /path/to/config.yaml
+```
+
+### Make it works with s3cmd
+
+To use **objets** with [s3cmd](http://s3tools.org/s3cmd), update `~/.s3cfg`.
+
+#### Local server
+
+```cfg
+host_base = localhost:8060
+host_bucket = localhost:8060/%(bucket)
+use_https = False
+```
+
+#### TLS mode
+
+```cfg
+host_base = objets.yourserver.com
+host_bucket = objets.yourserver.com/%(bucket)
+use_https = True
 ```
 
 ## License

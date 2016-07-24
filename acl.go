@@ -13,6 +13,7 @@ var (
 	keyACLFmt = "acl:%s:%s" // acl:<bucket>:<key> => ACL
 )
 
+// ACL holds a key => ACL reference
 type ACL struct {
 	db   *kv.DB
 	path string
