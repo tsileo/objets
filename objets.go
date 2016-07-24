@@ -33,7 +33,7 @@ func New(confPath string) (*Objets, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := os.MkdirAll(filepath.Join(conf.DataDir(), bucketDir), os.ModeDir); err != nil {
+	if err := os.MkdirAll(filepath.Join(conf.DataDir(), bucketDir), os.ModeDir|0755); err != nil {
 		return nil, err
 	}
 	acl, err := newACL(filepath.Join(conf.DataDir(), "acl.db"))
@@ -132,7 +132,7 @@ func (o *Objets) DeleteBucket(bucket string) error {
 }
 
 func (o *Objets) PutBucket(bucket string) error {
-	return os.MkdirAll(filepath.Join(o.conf.DataDir(), bucketDir, bucket), os.ModeDir)
+	return os.MkdirAll(filepath.Join(o.conf.DataDir(), bucketDir, bucket), os.ModeDir|0755)
 }
 
 func (o *Objets) PutObjectAcl(bucket, key string, acl s3layer.CannedACL) error {
@@ -207,11 +207,11 @@ func (o *Objets) GetObject(bucket, key string) (io.Reader, s3layer.CannedACL, er
 }
 
 func (o *Objets) PutObject(bucket, key string, reader io.Reader, acl s3layer.CannedACL) error {
-	log.Printf("PutObject(%s, %s, <reader>)\n", bucket, key, reader)
+	log.Printf("PutObject(%s, %s, <reader>, %s)\n", bucket, key, reader, acl)
 	if containsDotDot(key) || containsDotDot(bucket) {
 		return fmt.Errorf("invalid key/bucket")
 	}
-	if err := os.MkdirAll(filepath.Join(o.conf.DataDir(), bucketDir, bucket, filepath.Dir(key)), 0644); err != nil {
+	if err := os.MkdirAll(filepath.Join(o.conf.DataDir(), bucketDir, bucket, filepath.Dir(key)), os.ModeDir|0755); err != nil {
 		return err
 	}
 	path := filepath.Join(o.conf.DataDir(), bucketDir, bucket, key)
