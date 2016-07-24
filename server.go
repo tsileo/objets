@@ -16,7 +16,7 @@ type Server struct {
 	shutdown chan struct{}
 }
 
-func NewServer(objets *Objets) *Server {
+func NewServer(objets *Objets, acl *ACL) *Server {
 	return &Server{
 		objets:   objets,
 		shutdown: make(chan struct{}),
@@ -28,7 +28,7 @@ func (s *Server) Shutdown() {
 }
 
 func (s *Server) Close() error {
-	return nil
+	return s.objets.Close()
 }
 
 func (s *Server) Serve() error {
