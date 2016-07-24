@@ -1,0 +1,5 @@
+*.log
+*.reg
+*.pem
+objets_data/
+*.bak
