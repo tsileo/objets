@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	_ "github.com/dkumor/acmewrapper"
 	"github.com/tsileo/s3layer"
@@ -32,6 +31,9 @@ type Objets struct {
 func New(confPath string) (*Objets, error) {
 	conf, err := newConfig(confPath)
 	if err != nil {
+		return nil, err
+	}
+	if err := os.MkdirAll(conf.DataDir(), os.ModeDir); err != nil {
 		return nil, err
 	}
 	acl, err := newACL(filepath.Join(conf.DataDir(), "acl.db"))
@@ -109,6 +111,14 @@ func (o *Objets) DeleteObject(bucket, key string) error {
 
 func (o *Objets) DeleteBucket(bucket string) error {
 	// TODO(tsileo): remove all ACLs first
+	delFunc := func(path string, info os.FileInfo, err error) error {
+		fmt.Printf("del func %s %+v %v\n", path, info, err)
+		// FIXME(tsileo): delete ACL
+		return nil
+	}
+	if err := filepath.Walk(filepath.Join(o.conf.DataDir(), bucketDir, bucket), delFunc); err != nil {
+		return err
+	}
 	return os.RemoveAll(filepath.Join(o.conf.DataDir(), bucketDir, bucket))
 }
 
@@ -117,7 +127,13 @@ func (o *Objets) PutBucket(bucket string, acl s3layer.CannedACL) error {
 }
 
 func (o *Objets) PutObjectAcl(bucket, key string, acl s3layer.CannedACL) error {
-	// TODO(tsileo): check that the object exist first (by checking its ACL?)
+	exist, err := o.StatObject(bucket, key)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		return s3layer.ErrKeyNotFound
+	}
 	return o.acl.Set(bucket, key, acl)
 }
 
@@ -133,6 +149,9 @@ func (o *Objets) ListBucket(bucket, prefix string) ([]*s3layer.ListBucketResultC
 	log.Printf("ListBucket path=%s\n", path)
 	dir, err := os.Open(path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil, s3layer.ErrBucketNotFound
+		}
 		return nil, nil, err
 	}
 
@@ -163,10 +182,12 @@ func (o *Objets) GetObject(bucket, key string) (io.Reader, s3layer.CannedACL, er
 		return nil, s3layer.Empty, fmt.Errorf("invalid key/bucket")
 	}
 	path := filepath.Join(o.conf.DataDir(), bucketDir, bucket, key)
-	// TODO(tsileo): check if object exist
 	log.Printf("GetObject path=%s\n", path)
 	f, err := os.Open(path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, s3layer.Empty, s3layer.ErrKeyNotFound
+		}
 		return nil, s3layer.Empty, err
 	}
 	acl, err := o.acl.Get(bucket, key)
