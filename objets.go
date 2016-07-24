@@ -133,18 +133,22 @@ func (o *Objets) ListBucket(bucket, prefix string) ([]*s3layer.ListBucketResultC
 	return contents, prefixes, nil
 }
 
-func (o *Objets) GetObject(bucket, key string) (io.Reader, error) {
+func (o *Objets) GetObject(bucket, key string) (io.Reader, s3layer.CannedACL, error) {
 	log.Printf("GetObject(%s, %s)\n", bucket, key)
 	if containsDotDot(key) || containsDotDot(bucket) {
-		return nil, fmt.Errorf("invalid key/bucket")
+		return nil, s3layer.Empty, fmt.Errorf("invalid key/bucket")
 	}
 	path := filepath.Join(o.conf.DataDir, bucketDir, bucket, key)
 	log.Printf("GetObject path=%s\n", path)
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, s3layer.Empty, err
 	}
-	return f, err
+	acl, err := o.acl.Get(bucket, key)
+	if err != nil {
+		return nil, s3layer.Empty, err
+	}
+	return f, acl, err
 }
 
 func (o *Objets) PutObject(bucket, key string, reader io.Reader, acl s3layer.CannedACL) error {
@@ -164,6 +168,9 @@ func (o *Objets) PutObject(bucket, key string, reader io.Reader, acl s3layer.Can
 		return err
 	}
 	if err := f.Sync(); err != nil {
+		return err
+	}
+	if err := o.acl.Set(bucket, key, acl); err != nil {
 		return err
 	}
 	log.Printf("PutObject path=%s\n", path)
