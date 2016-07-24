@@ -59,10 +59,36 @@ func (o *Objets) Close() error {
 	return o.acl.Close()
 }
 
+func (o *Objets) StatObject(bucket, key string) (bool, error) {
+	_, err := os.Stat(filepath.Join(o.conf.DataDir(), bucketDir, bucket, key))
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (o *Objets) Buckets() ([]*s3layer.Bucket, error) {
-	// FIXME(tsileo): readDir
-	res := []*s3layer.Bucket{&s3layer.Bucket{Name: "testing", CreationDate: time.Now()}}
-	// 2006-02-03T16:45:09.000Z
+	res := []*s3layer.Bucket{}
+	root, err := os.Open(filepath.Join(o.conf.DataDir(), bucketDir))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, s3layer.ErrKeyNotFound
+		}
+		return nil, err
+	}
+
+	fis, err := root.Readdir(-1)
+	if err != nil {
+		return nil, err
+	}
+	for _, fi := range fis {
+		if fi.IsDir() {
+			res = append(res, &s3layer.Bucket{Name: fi.Name(), CreationDate: fi.ModTime()})
+		}
+	}
 	return res, nil
 }
 
