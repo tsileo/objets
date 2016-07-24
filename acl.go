@@ -1,11 +1,16 @@
 package objets
 
 import (
+	"fmt"
 	"os"
 	"sync"
 
 	"github.com/cznic/kv"
 	"github.com/tsileo/s3layer"
+)
+
+var (
+	keyACLFmt = "acl:%s:%s" // acl:<bucket>:<key> => ACL
 )
 
 type ACL struct {
@@ -32,15 +37,19 @@ func newACL(path string) (*ACL, error) {
 }
 
 func (acl *ACL) Set(bucket, key string, cacl s3layer.CannedACL) error {
-	return nil
+	return acl.db.Set([]byte(fmt.Sprintf(keyACLFmt, bucket, key)), []byte(cacl))
 }
 
 func (acl *ACL) Get(bucket, key string) (s3layer.CannedACL, error) {
-	return s3layer.Private, nil
+	racl, err := acl.db.Get(nil, []byte(fmt.Sprintf(keyACLFmt, bucket, key)))
+	if err != nil {
+		return "", err
+	}
+	return s3layer.CannedACL(racl), nil
 }
 
 func (acl *ACL) Remove(bucket, key string) error {
-	return nil
+	return acl.db.Delete([]byte(fmt.Sprintf(keyACLFmt, bucket, key)))
 }
 
 func (acl *ACL) Close() error {

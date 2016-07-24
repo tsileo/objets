@@ -33,7 +33,7 @@ func New(confPath string) (*Objets, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := os.MkdirAll(conf.DataDir(), os.ModeDir); err != nil {
+	if err := os.MkdirAll(filepath.Join(conf.DataDir(), bucketDir), os.ModeDir); err != nil {
 		return nil, err
 	}
 	acl, err := newACL(filepath.Join(conf.DataDir(), "acl.db"))
@@ -61,15 +61,19 @@ func (o *Objets) Close() error {
 	return o.acl.Close()
 }
 
-func (o *Objets) StatObject(bucket, key string) (bool, error) {
+func (o *Objets) StatObject(bucket, key string) (bool, s3layer.CannedACL, error) {
 	_, err := os.Stat(filepath.Join(o.conf.DataDir(), bucketDir, bucket, key))
 	if os.IsNotExist(err) {
-		return false, nil
+		return false, s3layer.Empty, nil
 	}
 	if err != nil {
-		return false, err
+		return false, s3layer.Empty, err
 	}
-	return true, nil
+	acl, err := o.acl.Get(bucket, key)
+	if err != nil {
+		return true, s3layer.Empty, err
+	}
+	return true, acl, nil
 }
 
 func (o *Objets) Buckets() ([]*s3layer.Bucket, error) {
@@ -110,10 +114,15 @@ func (o *Objets) DeleteObject(bucket, key string) error {
 }
 
 func (o *Objets) DeleteBucket(bucket string) error {
-	// TODO(tsileo): remove all ACLs first
+	bpath := filepath.Join(o.conf.DataDir(), bucketDir, bucket)
+	if _, err := os.Stat(bpath); os.IsNotExist(err) {
+		return s3layer.ErrBucketNotFound
+	}
 	delFunc := func(path string, info os.FileInfo, err error) error {
-		fmt.Printf("del func %s %+v %v\n", path, info, err)
-		// FIXME(tsileo): delete ACL
+		if !info.IsDir() {
+			p := strings.Replace(path, filepath.Join(o.conf.DataDir(), bucketDir, bucket), "", -1)
+			return o.acl.Remove(bucket, p[1:])
+		}
 		return nil
 	}
 	if err := filepath.Walk(filepath.Join(o.conf.DataDir(), bucketDir, bucket), delFunc); err != nil {
@@ -122,12 +131,12 @@ func (o *Objets) DeleteBucket(bucket string) error {
 	return os.RemoveAll(filepath.Join(o.conf.DataDir(), bucketDir, bucket))
 }
 
-func (o *Objets) PutBucket(bucket string, acl s3layer.CannedACL) error {
+func (o *Objets) PutBucket(bucket string) error {
 	return os.MkdirAll(filepath.Join(o.conf.DataDir(), bucketDir, bucket), os.ModeDir)
 }
 
 func (o *Objets) PutObjectAcl(bucket, key string, acl s3layer.CannedACL) error {
-	exist, err := o.StatObject(bucket, key)
+	exist, _, err := o.StatObject(bucket, key)
 	if err != nil {
 		return err
 	}
