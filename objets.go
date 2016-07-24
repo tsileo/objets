@@ -60,6 +60,7 @@ func (o *Objets) Close() error {
 }
 
 func (o *Objets) Buckets() ([]*s3layer.Bucket, error) {
+	// FIXME(tsileo): readDir
 	res := []*s3layer.Bucket{&s3layer.Bucket{Name: "testing", CreationDate: time.Now()}}
 	// 2006-02-03T16:45:09.000Z
 	return res, nil
@@ -136,6 +137,7 @@ func (o *Objets) GetObject(bucket, key string) (io.Reader, s3layer.CannedACL, er
 		return nil, s3layer.Empty, fmt.Errorf("invalid key/bucket")
 	}
 	path := filepath.Join(o.conf.DataDir(), bucketDir, bucket, key)
+	// TODO(tsileo): check if object exist
 	log.Printf("GetObject path=%s\n", path)
 	f, err := os.Open(path)
 	if err != nil {

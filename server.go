@@ -71,7 +71,7 @@ func (s *Server) Serve() error {
 			// To enable http2, we need http.Server to have reference to tlsconfig
 			// https://github.com/golang/go/issues/14374
 			server := &http.Server{
-				Addr:      ":443",
+				Addr:      s.objets.conf.Listen(),
 				Handler:   m,
 				TLSConfig: tlsconfig,
 			}
