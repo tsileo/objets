@@ -1,12 +1,14 @@
 package objets
 
 import (
+	"crypto/tls"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
-	_ "github.com/dkumor/acmewrapper"
+	"github.com/dkumor/acmewrapper"
 	"github.com/gorilla/mux"
 	"github.com/tsileo/s3layer"
 )
@@ -41,40 +43,42 @@ func (s *Server) Serve() error {
 		m.Handle("/{bucket}/", h)
 		m.Handle("/{bucket}/{path:.+}", h)
 
-		// w, err := acmewrapper.New(acmewrapper.Config{
-		// 	Domains: []string{"0.a4.io"},
-		// 	Address: ":443",
+		if s.objets.conf.AutoTLS {
+			w, err := acmewrapper.New(acmewrapper.Config{
+				Domains: s.objets.conf.Domains,
+				Address: s.objets.conf.Listen(),
 
-		// 	TLSCertFile: "cert.pem",
-		// 	TLSKeyFile:  "key.pem",
+				TLSCertFile: filepath.Join(s.objets.conf.DataDir, "cert.pem"),
+				TLSKeyFile:  filepath.Join(s.objets.conf.DataDir, "key.pem"),
 
-		// 	RegistrationFile: "user.reg",
-		// 	PrivateKeyFile:   "user.pem",
+				RegistrationFile: filepath.Join(s.objets.conf.DataDir, "user.reg"),
+				PrivateKeyFile:   filepath.Join(s.objets.conf.DataDir, "user.pem"),
 
-		// 	TOSCallback: acmewrapper.TOSAgree,
-		// })
+				TOSCallback: acmewrapper.TOSAgree,
+			})
 
-		// if err != nil {
-		// 	log.Fatal("acmewrapper: ", err)
-		// }
+			if err != nil {
+				panic(err)
+			}
 
-		// tlsconfig := w.TLSConfig()
+			tlsconfig := w.TLSConfig()
 
-		// listener, err := tls.Listen("tcp", ":443", tlsconfig)
-		// if err != nil {
-		// 	log.Fatal("Listener: ", err)
-		// }
+			listener, err := tls.Listen("tcp", s.objets.conf.Listen(), tlsconfig)
+			if err != nil {
+				panic(err)
+			}
 
-		// // To enable http2, we need http.Server to have reference to tlsconfig
-		// // https://github.com/golang/go/issues/14374
-		// server := &http.Server{
-		// 	Addr:      ":443",
-		// 	Handler:   m,
-		// 	TLSConfig: tlsconfig,
-		// }
-		// server.Serve(listener)
-
-		http.ListenAndServe(":8060", m)
+			// To enable http2, we need http.Server to have reference to tlsconfig
+			// https://github.com/golang/go/issues/14374
+			server := &http.Server{
+				Addr:      ":443",
+				Handler:   m,
+				TLSConfig: tlsconfig,
+			}
+			server.Serve(listener)
+		} else {
+			http.ListenAndServe(s.objets.conf.Listen(), m)
+		}
 	}()
 	s.tillShutdown()
 	return s.Close()

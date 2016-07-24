@@ -15,7 +15,7 @@ type Config struct {
 	DataDir string `yaml:"data_dir"`
 
 	// Server listen
-	Listen string `yaml:"listen"`
+	listen string `yaml:"listen"`
 
 	// TLS related config
 	AutoTLS bool     `yaml:"tls_auto"`
@@ -24,6 +24,16 @@ type Config struct {
 	// Auth
 	AccessKeyID     string `yaml:"access_key_id"`
 	SecretAccessKey string `yaml:"secret_access_key"`
+}
+
+func (c *Config) Listen() string {
+	if c.listen != "" {
+		return c.listen
+	}
+	if c.AutoTLS {
+		return ":443"
+	}
+	return ":8060"
 }
 
 func newConfig(path string) (*Config, error) {
