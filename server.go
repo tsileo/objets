@@ -2,6 +2,7 @@ package objets
 
 import (
 	"crypto/tls"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -80,6 +81,7 @@ func (s *Server) Serve() error {
 			http.ListenAndServe(s.objets.conf.Listen(), m)
 		}
 	}()
+	log.Printf("Listening on %s\n", s.objets.conf.Listen())
 	s.tillShutdown()
 	return s.Close()
 }
@@ -95,6 +97,7 @@ func (s *Server) tillShutdown() {
 	for {
 		select {
 		case <-cs:
+			log.Printf("Shutting down...")
 			return
 		case <-s.shutdown:
 			return

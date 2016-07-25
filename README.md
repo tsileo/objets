@@ -1,6 +1,6 @@
 # Objets
 
-Objets (`/ɔb.ʒɛ/`, objects in French) is an object storage server (using a directory as backend) with a AWS S3 compatible API.
+Objets (`/ɔb.ʒɛ/`, objects in French) is an object storage server (using a directory as back-end) with a AWS S3 compatible API.
 
 ## Features
 
@@ -8,15 +8,22 @@ Objets (`/ɔb.ʒɛ/`, objects in French) is an object storage server (using a di
  - HTTP2 enabled (when using TLS)
  - support public sharing (via the `public-read` canned ACL)
  - multi-part upload support
+ - support both AWS signature v4 and v2
 
-## Constraints
+### Drawbacks
 
  - No "one subdomain per bucket"
  - No torrent feature
  - No ACL on bucket
  - Only support `private` and `public-read` ACL for objets
 
-## Config
+## QuickStart
+
+```sh
+$ objets /path/to/config.yaml
+```
+
+### Config
 
 ```yaml
 data_dir: '/path/where/data/will/be/stored' # optional, defaults to './objets_data'
@@ -31,12 +38,6 @@ access_key_id: 'youracesskeyid'  # required
 secret_access_key: 'yoursecretaccesskey' # required
 ```
 
-## QuickStart
-
-```sh
-$ objets /path/to/config.yaml
-```
-
 ### Make it works with s3cmd
 
 To use **objets** with [s3cmd](http://s3tools.org/s3cmd), update `~/.s3cfg`.
@@ -44,6 +45,8 @@ To use **objets** with [s3cmd](http://s3tools.org/s3cmd), update `~/.s3cfg`.
 #### Local server
 
 ```cfg
+access_key = myaccesskey
+secret_key = mysecretkey
 host_base = localhost:8060
 host_bucket = localhost:8060/%(bucket)
 use_https = False
@@ -52,6 +55,8 @@ use_https = False
 #### TLS mode
 
 ```cfg
+access_key = myaccesskey
+secret_key = mysecretkey
 host_base = objets.yourserver.com
 host_bucket = objets.yourserver.com/%(bucket)
 use_https = True
