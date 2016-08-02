@@ -30,8 +30,8 @@ data_dir: '/path/where/data/will/be/stored' # optional, defaults to './objets_da
 
 listen: ':443' # optional, defaults to ':8060', or ':433' in TLS mode
 
-auto_tls: true # optional, defaults to 'false'. Enable/disable auto TLS via Let's Encrypt
-domains: # optional. required in TLS mode. List of domains to fetch TLS certificate
+tls_auto: true # optional, defaults to 'false'. Enable/disable auto TLS via Let's Encrypt
+tls_domains: # optional. required in TLS mode. List of domains to fetch TLS certificate
   - 'objets.mydomain.com'
 
 access_key_id: 'youracesskeyid'  # required

@@ -12,10 +12,10 @@ var (
 
 type Config struct {
 	// Where objects will be stored
-	dataDir string `yaml:"data_dir"`
+	UserDataDir string `yaml:"data_dir"`
 
 	// Server listen
-	listen string `yaml:"listen"`
+	UserListen string `yaml:"listen"`
 
 	// TLS related config
 	AutoTLS bool     `yaml:"tls_auto"`
@@ -27,15 +27,15 @@ type Config struct {
 }
 
 func (c *Config) DataDir() string {
-	if c.dataDir == "" {
+	if c.UserDataDir == "" {
 		return DefautRootPath
 	}
-	return c.dataDir
+	return c.UserDataDir
 }
 
 func (c *Config) Listen() string {
-	if c.listen != "" {
-		return c.listen
+	if c.UserListen != "" {
+		return c.UserListen
 	}
 	if c.AutoTLS {
 		return ":443"
