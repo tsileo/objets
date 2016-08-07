@@ -44,7 +44,7 @@ To use **objets** with [s3cmd](http://s3tools.org/s3cmd), update `~/.s3cfg`.
 
 #### Local server
 
-```config
+```
 access_key = myaccesskey
 secret_key = mysecretkey
 host_base = localhost:8060
@@ -54,7 +54,7 @@ use_https = False
 
 #### TLS mode
 
-```config
+```
 access_key = myaccesskey
 secret_key = mysecretkey
 host_base = objets.yourserver.com
